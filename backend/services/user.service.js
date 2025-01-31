@@ -16,9 +16,16 @@ export const createUser = async ({
     })
     return user;
 }
-export const getAllUsers = async({userId})=>{
-    const users = await User.find({ _id: { $ne: userId } })
+// export const getAllUsers = async({userId})=>{
+//     const users = await User.find({ _id: { $ne: userId } })
     
-    console.log(users)
-    return users
-}
+//     console.log(users)
+//     return users
+// }
+// Modified userService.getAllUsers:
+export const getAllUsers = async ({ excludedUserIds }) => {
+    // Handle the case where excludedUserIds might be null or undefined
+    const query = excludedUserIds && excludedUserIds.length > 0 ? { _id: { $nin: excludedUserIds } } : {};
+  const users = await User.find(query);
+  return users;
+};

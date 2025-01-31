@@ -69,3 +69,21 @@ export const getProjectDetails = async (req,res) =>{
         return res.status(400).json({error: error.message})
     }
 }
+
+export const deleteProject = async (req,res) => {
+    try {
+        const {projectId} = req.params;
+        const project = await projectService.deleteProject({projectId})
+        if (project.deletedCount && project.deletedCount > 0) { // Check if something was actually deleted
+            return res.status(200).json({ message: "Project deleted successfully" }); // More descriptive message
+          } else if (project.deletedCount === 0) {
+            return res.status(404).json({ error: "Project not found" }); // 404 for not found
+          }
+          else {
+            return res.status(200).json({project}) // If project service returns the project
+          }
+    } catch (error) {
+        console.log(error)
+        return res.status(400).json({error: error.message})
+  }
+}

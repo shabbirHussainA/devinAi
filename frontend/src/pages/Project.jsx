@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState,useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import projApi from '../apis/projApi'
 import authApi from '../apis/authApi'
 import { InitializeSocket,receiveMessage,sendMessage } from '../config/socket'
-
+import {useDispatch, useSelector} from 'react-redux'
 function Project() {
  const location = useLocation() // geting data send using navigate hook
  const [isSidePanelOpen, setisSidePanelOpen] = useState(false)
@@ -12,13 +12,16 @@ function Project() {
  const [project, setproject] = useState(location.state)
  const [users, setusers] = useState([])
  const [message, setmessage] = useState('')
-
+    const messageBox = useRef()
+const {user} = useSelector((state)=> state.auth)
    useEffect(() => {
+   
        InitializeSocket(project._id);
        receiveMessage('project-message',(data)=>{
+        appendIncomingMessage(data)
            console.log(data)
        })
-     authApi.allUser().then((res)=>setusers(res.data.users)).catch(err=> console.log(err))
+     authApi.allUser(project._id).then((res)=>setusers(res.data.users)).catch(err=> console.log(err))
     projApi.getDetails({projectId: location.state._id}).then(res => setproject(res.data.project)).catch(err=> console.log(err))
    }, [])
    
@@ -41,9 +44,37 @@ function Project() {
     console.log("sending")
     sendMessage('project-message',{
         message,
-        sender: localStorage.getItem('user')
+        sender: user.email
     })
+    console.log(message)
+    appendOutgoingMessage(message)
    }
+   const appendIncomingMessage = (messageObj) => {
+    const messageBox = document.querySelector('.message-box');
+    const message = document.createElement('div');
+    message.classList.add('max-w-56', 'message', 'flex', 'flex-col', 'p-2', 'bg-slate-50', 'w-fit', 'rounded-md');
+    // Corrected: Use standard HTML attribute names and string concatenation
+    message.innerHTML = `
+      <small class="opacity-65 text-xs">${messageObj.sender}</small>
+      <div class="text-sm">
+        ${messageObj.message}
+      </div>`;
+  
+    messageBox.append(message);
+  };
+  const appendOutgoingMessage = (messageObj) => {
+    const messageBox = document.querySelector('.message-box');
+    const message = document.createElement('div');
+    message.classList.add('max-w-56', 'ml-auto' ,'message', 'flex', 'flex-col', 'p-2', 'bg-slate-50', 'w-fit', 'rounded-md');
+    // Corrected: Use standard HTML attribute names and string concatenation
+    message.innerHTML = `
+      <small class="opacity-65 text-xs">${messageObj.sender}</small>
+      <div class="text-sm">
+        ${messageObj.message}
+      </div>`;
+  
+    messageBox.append(message);
+  };
   return (
    <>
    <main className='h-screen w-screen flex'>
@@ -57,7 +88,7 @@ function Project() {
             <i className="ri-group-fill"></i>
             </button>
         </header>
-        <div className="conversation-area pt-14 pb-10 flex-grow flex flex-col h-full relative">
+        <div ref={messageBox} className="conversation-area pt-14 pb-10 flex-grow flex flex-col h-full relative">
             <div   className="message-box p-1 flex-grow flex flex-col gap-1 overflow-auto max-h-full scrollbar-hide">
                 <div className="incoming max-w-56 message flex flex-col p-2 bg-slate-50 w-fit rounded-md">
                     <small className='opacity-65 text-xs'>example@gmail.com</small>
